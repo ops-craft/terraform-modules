@@ -1,6 +1,6 @@
 # github-repository
 
-Terraform module to create and manage GitHub repositories with branch protection and access controls.
+Terraform module to create and manage GitHub repositories with rulesets and access controls.
 
 ## Usage
 
@@ -32,14 +32,27 @@ module "my_repo" {
   allow_squash_merge = true
   allow_rebase_merge = true
 
-  branch_protection = {
-    enforce_admins                  = true
-    required_approving_review_count = 2
-    dismiss_stale_reviews           = true
-    require_code_owner_reviews      = true
-    require_conversation_resolution = true
-    required_status_checks          = ["ci/build", "ci/test"]
-    strict_status_checks            = true
+  rulesets = {
+    default-branch = {
+      target      = "branch"
+      enforcement = "active"
+
+      pull_request = {
+        required_approving_review_count   = 2
+        dismiss_stale_reviews_on_push     = true
+        require_code_owner_review         = true
+        required_review_thread_resolution = true
+      }
+
+      required_status_checks = [
+        { context = "ci/build" },
+        { context = "ci/test" },
+      ]
+
+      deletion                = true
+      non_fast_forward        = true
+      required_linear_history = true
+    }
   }
 
   teams = {
@@ -92,24 +105,38 @@ module "my_repo" {
 | `template` | Template repo (`{owner, repository}`) | `object` | `null` | no |
 | `gitignore_template` | Gitignore template name | `string` | `null` | no |
 | `license_template` | License template name | `string` | `null` | no |
-| `branch_protection` | Branch protection config (see below) | `object` | `null` | no |
+| `rulesets` | Map of ruleset name → config (see below) | `map(object)` | `{}` | no |
 | `teams` | Map of team slug → permission | `map(string)` | `{}` | no |
 | `collaborators` | Map of username → permission | `map(string)` | `{}` | no |
 
-### Branch protection object
+### Ruleset object
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `target` | `string` | `"branch"` | `branch`, `tag`, or `push` |
+| `enforcement` | `string` | `"active"` | `active`, `evaluate`, or `disabled` |
+| `include_refs` | `list(string)` | `["~DEFAULT_BRANCH"]` | Ref patterns to include |
+| `exclude_refs` | `list(string)` | `[]` | Ref patterns to exclude |
+| `bypass_actors` | `list(object)` | `[]` | Actors that bypass rules |
+| `creation` | `bool` | `false` | Restrict ref creation |
+| `update` | `bool` | `false` | Restrict ref updates |
+| `deletion` | `bool` | `false` | Restrict ref deletion |
+| `required_linear_history` | `bool` | `false` | Require linear history |
+| `required_signatures` | `bool` | `false` | Require signed commits |
+| `non_fast_forward` | `bool` | `true` | Prevent non-fast-forward pushes |
+| `pull_request` | `object` | `null` | PR review requirements (see below) |
+| `required_status_checks` | `list(object)` | `[]` | Required status checks |
+| `strict_required_status_checks` | `bool` | `true` | Require branches to be up to date |
+
+### Pull request object
 
 | Field | Type | Default |
 |-------|------|---------|
-| `enforce_admins` | `bool` | `true` |
 | `required_approving_review_count` | `number` | `1` |
-| `dismiss_stale_reviews` | `bool` | `true` |
-| `require_code_owner_reviews` | `bool` | `false` |
-| `require_conversation_resolution` | `bool` | `true` |
-| `required_status_checks` | `list(string)` | `[]` |
-| `strict_status_checks` | `bool` | `true` |
-| `require_signed_commits` | `bool` | `false` |
-| `allow_force_pushes` | `bool` | `false` |
-| `allow_deletions` | `bool` | `false` |
+| `dismiss_stale_reviews_on_push` | `bool` | `true` |
+| `require_code_owner_review` | `bool` | `false` |
+| `require_last_push_approval` | `bool` | `false` |
+| `required_review_thread_resolution` | `bool` | `true` |
 
 ## Outputs
 

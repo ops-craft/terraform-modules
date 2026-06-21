@@ -131,23 +131,50 @@ variable "license_template" {
   default     = null
 }
 
-# --- Branch protection ---
+# --- Rulesets ---
 
-variable "branch_protection" {
-  description = "Branch protection configuration for the default branch. Set to null to disable."
-  type = object({
-    enforce_admins                  = optional(bool, true)
-    required_approving_review_count = optional(number, 1)
-    dismiss_stale_reviews           = optional(bool, true)
-    require_code_owner_reviews      = optional(bool, false)
-    require_conversation_resolution = optional(bool, true)
-    required_status_checks          = optional(list(string), [])
-    strict_status_checks            = optional(bool, true)
-    require_signed_commits          = optional(bool, false)
-    allow_force_pushes              = optional(bool, false)
-    allow_deletions                 = optional(bool, false)
-  })
-  default = null
+variable "rulesets" {
+  description = "Map of repository rulesets. Key is the ruleset name."
+  type = map(object({
+    target      = optional(string, "branch")
+    enforcement = optional(string, "active")
+
+    # Ref targeting (required for branch/tag targets)
+    include_refs = optional(list(string), ["~DEFAULT_BRANCH"])
+    exclude_refs = optional(list(string), [])
+
+    # Bypass actors
+    bypass_actors = optional(list(object({
+      actor_id    = number
+      actor_type  = string
+      bypass_mode = optional(string, "always")
+    })), [])
+
+    # Rules
+    creation                      = optional(bool, false)
+    update                        = optional(bool, false)
+    deletion                      = optional(bool, false)
+    required_linear_history       = optional(bool, false)
+    required_signatures           = optional(bool, false)
+    non_fast_forward              = optional(bool, true)
+
+    # Pull request rules
+    pull_request = optional(object({
+      required_approving_review_count   = optional(number, 1)
+      dismiss_stale_reviews_on_push     = optional(bool, true)
+      require_code_owner_review         = optional(bool, false)
+      require_last_push_approval        = optional(bool, false)
+      required_review_thread_resolution = optional(bool, true)
+    }), null)
+
+    # Required status checks
+    required_status_checks = optional(list(object({
+      context        = string
+      integration_id = optional(number)
+    })), [])
+    strict_required_status_checks = optional(bool, true)
+  }))
+  default = {}
 }
 
 # --- Access ---
