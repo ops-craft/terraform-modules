@@ -41,29 +41,67 @@ resource "github_branch_default" "this" {
   branch     = var.default_branch
 }
 
-# --- Branch protection ---
+# --- Rulesets ---
 
-resource "github_branch_protection_v3" "default" {
-  count = var.branch_protection != null ? 1 : 0
+resource "github_repository_ruleset" "this" {
+  for_each = var.rulesets
 
-  repository     = github_repository.this.name
-  branch         = var.default_branch
-  enforce_admins = var.branch_protection.enforce_admins
+  name        = each.key
+  repository  = github_repository.this.name
+  target      = each.value.target
+  enforcement = each.value.enforcement
 
-  require_conversation_resolution = var.branch_protection.require_conversation_resolution
-  require_signed_commits          = var.branch_protection.require_signed_commits
-
-  required_pull_request_reviews {
-    required_approving_review_count = var.branch_protection.required_approving_review_count
-    dismiss_stale_reviews           = var.branch_protection.dismiss_stale_reviews
-    require_code_owner_reviews      = var.branch_protection.require_code_owner_reviews
+  dynamic "conditions" {
+    for_each = each.value.target != "push" ? [1] : []
+    content {
+      ref_name {
+        include = each.value.include_refs
+        exclude = each.value.exclude_refs
+      }
+    }
   }
 
-  dynamic "required_status_checks" {
-    for_each = length(var.branch_protection.required_status_checks) > 0 ? [1] : []
+  dynamic "bypass_actors" {
+    for_each = each.value.bypass_actors
     content {
-      strict = var.branch_protection.strict_status_checks
-      checks = var.branch_protection.required_status_checks
+      actor_id    = bypass_actors.value.actor_id
+      actor_type  = bypass_actors.value.actor_type
+      bypass_mode = bypass_actors.value.bypass_mode
+    }
+  }
+
+  rules {
+    creation                = each.value.creation
+    update                  = each.value.update
+    deletion                = each.value.deletion
+    required_linear_history = each.value.required_linear_history
+    required_signatures     = each.value.required_signatures
+    non_fast_forward        = each.value.non_fast_forward
+
+    dynamic "pull_request" {
+      for_each = each.value.pull_request != null ? [each.value.pull_request] : []
+      content {
+        required_approving_review_count   = pull_request.value.required_approving_review_count
+        dismiss_stale_reviews_on_push     = pull_request.value.dismiss_stale_reviews_on_push
+        require_code_owner_review         = pull_request.value.require_code_owner_review
+        require_last_push_approval        = pull_request.value.require_last_push_approval
+        required_review_thread_resolution = pull_request.value.required_review_thread_resolution
+      }
+    }
+
+    dynamic "required_status_checks" {
+      for_each = length(each.value.required_status_checks) > 0 ? [1] : []
+      content {
+        strict_required_status_checks_policy = each.value.strict_required_status_checks
+
+        dynamic "required_check" {
+          for_each = each.value.required_status_checks
+          content {
+            context        = required_check.value.context
+            integration_id = required_check.value.integration_id
+          }
+        }
+      }
     }
   }
 
