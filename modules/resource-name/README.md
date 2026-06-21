@@ -8,8 +8,7 @@ Generic Terraform module that constructs standardised resource names from defaul
 ${prefix}-${name}-${purpose}-${type}-${suffix}-${env}
 ```
 
-Optional segments (`prefix`, `purpose`, `suffix`) are omitted when empty.
-`env` is always the last segment.
+The module reads `name` and `env` from `data.aws_default_tags.current.tags` automatically — no need to pass tags explicitly. Just ensure your AWS provider has `default_tags` configured.
 
 ## Usage
 
@@ -17,9 +16,8 @@ Optional segments (`prefix`, `purpose`, `suffix`) are omitted when empty.
 
 ```hcl
 module "name" {
-  source       = "../resource-name"
-  type         = "sqs"
-  default_tags = data.aws_default_tags.this.tags
+  source = "../resource-name"
+  type   = "sqs"
 }
 
 # name.result => "my-app-sqs-prod"
@@ -29,10 +27,9 @@ module "name" {
 
 ```hcl
 module "name" {
-  source       = "../resource-name"
-  type         = "sqs"
-  purpose      = "orders"
-  default_tags = data.aws_default_tags.this.tags
+  source  = "../resource-name"
+  type    = "sqs"
+  purpose = "orders"
 }
 
 # name.result => "my-app-orders-sqs-prod"
@@ -42,11 +39,10 @@ module "name" {
 
 ```hcl
 module "dlq_name" {
-  source       = "../resource-name"
-  type         = "sqs"
-  purpose      = "orders"
-  suffix       = "dlq"
-  default_tags = data.aws_default_tags.this.tags
+  source  = "../resource-name"
+  type    = "sqs"
+  purpose = "orders"
+  suffix  = "dlq"
 }
 
 # dlq_name.result => "my-app-orders-sqs-dlq-prod"
@@ -60,7 +56,6 @@ module "name" {
   type         = "rds"
   name_tag_key = "project"
   env_tag_key  = "environment"
-  default_tags = data.aws_default_tags.this.tags
 }
 ```
 
@@ -69,7 +64,6 @@ module "name" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|----------|
 | `type` | Resource type identifier (e.g. `sqs`, `rds`) | `string` | — | yes |
-| `default_tags` | Tags map to read name and env from | `map(string)` | — | yes |
 | `purpose` | Disambiguator for multiple resources | `string` | `""` | no |
 | `prefix` | Name prefix | `string` | `""` | no |
 | `suffix` | Name suffix (e.g. `dlq`) | `string` | `""` | no |

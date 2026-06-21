@@ -1,6 +1,9 @@
+data "aws_default_tags" "current" {}
+
 locals {
-  name = var.default_tags[var.name_tag_key]
-  env  = var.default_tags[var.env_tag_key]
+  tags = data.aws_default_tags.current.tags
+  name = local.tags[var.name_tag_key]
+  env  = local.tags[var.env_tag_key]
 
   # Build ordered parts, filtering out empty segments.
   # Pattern: ${prefix}-${name}-${purpose}-${type}-${suffix}-${env}

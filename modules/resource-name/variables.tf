@@ -26,19 +26,14 @@ variable "suffix" {
   default     = ""
 }
 
-variable "default_tags" {
-  description = "Default tags map used to derive the resource name and environment."
-  type        = map(string)
-}
-
 variable "name_tag_key" {
-  description = "Key in default_tags that holds the resource name."
+  description = "Key in default tags that holds the resource name."
   type        = string
   default     = "name"
 }
 
 variable "env_tag_key" {
-  description = "Key in default_tags that holds the environment."
+  description = "Key in default tags that holds the environment."
   type        = string
   default     = "env"
 }
