@@ -10,14 +10,12 @@ resource "github_repository" "this" {
   has_issues      = var.has_issues
   has_projects    = var.has_projects
   has_wiki        = var.has_wiki
-  has_discussions  = var.has_discussions
+  has_discussions = var.has_discussions
 
   allow_merge_commit = var.allow_merge_commit
   allow_squash_merge = var.allow_squash_merge
   allow_rebase_merge = var.allow_rebase_merge
   allow_auto_merge   = var.allow_auto_merge
-
-  vulnerability_alerts = var.vulnerability_alerts
 
   topics       = var.topics
   homepage_url = var.homepage_url
@@ -32,6 +30,17 @@ resource "github_repository" "this" {
       repository = template.value.repository
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      archive_on_destroy,
+    ]
+  }
+}
+
+resource "github_repository_vulnerability_alerts" "this" {
+  repository = github_repository.this.name
+  enabled    = var.vulnerability_alerts
 }
 
 # --- Default branch ---
@@ -106,6 +115,12 @@ resource "github_repository_ruleset" "this" {
   }
 
   depends_on = [github_branch_default.this]
+
+  lifecycle {
+    ignore_changes = [
+      bypass_actors,
+    ]
+  }
 }
 
 # --- Team access ---

@@ -151,12 +151,12 @@ variable "rulesets" {
     })), [])
 
     # Rules
-    creation                      = optional(bool, false)
-    update                        = optional(bool, false)
-    deletion                      = optional(bool, false)
-    required_linear_history       = optional(bool, false)
-    required_signatures           = optional(bool, false)
-    non_fast_forward              = optional(bool, true)
+    creation                = optional(bool, false)
+    update                  = optional(bool, false)
+    deletion                = optional(bool, false)
+    required_linear_history = optional(bool, false)
+    required_signatures     = optional(bool, false)
+    non_fast_forward        = optional(bool, true)
 
     # Pull request rules
     pull_request = optional(object({
