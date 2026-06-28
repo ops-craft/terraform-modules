@@ -115,12 +115,6 @@ resource "github_repository_ruleset" "this" {
   }
 
   depends_on = [github_branch_default.this]
-
-  lifecycle {
-    ignore_changes = [
-      bypass_actors,
-    ]
-  }
 }
 
 # --- Team access ---
